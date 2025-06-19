@@ -1,10 +1,7 @@
 pub mod ops;
 pub mod primitives;
-use crate::types::primitives::{_F8, _F16, _F32};
-use float8::F8E4M3;
+use crate::types::primitives::{_F8, _F16, _F32, FPrimitive};
 use rand::{distr::StandardUniform, prelude::*};
-
-use crate::types::primitives::Primitive;
 
 #[derive(Debug)]
 pub struct Neuron<T> {
@@ -13,12 +10,16 @@ pub struct Neuron<T> {
     bias: T,
 }
 
+pub struct Layer<T> {
+    neurons: Vec<Neuron<T>>,
+}
+
 impl<T> Neuron<T>
 where
-    T: Primitive<f32> + Primitive<float16::f16> + Primitive<F8E4M3>,
+    T: FPrimitive<T> + std::ops::Mul<T, Output = T> + std::ops::Add<T, Output = T>,
     StandardUniform: rand::distr::Distribution<T>,
 {
-    pub fn init(dimensions: Vec<usize>) -> Neuron<T> {
+    pub fn new(dimensions: Vec<usize>) -> Neuron<T> {
         let mut rng = rand::rng();
 
         let bias = T::from(rng.random::<T>()); // Initialize bias as f32 and convert to T
@@ -39,17 +40,35 @@ where
             "Neuron received invalid input shape!"
         );
 
-        let mut output = T::default(); // TODO: figure out how to initialize using `Default`
+        let mut output = T::default();
 
         for (idx, value) in inputs.iter().enumerate() {
-            output = T::new(output.value() + value.value() * self.weights[idx].value());
+            output = output.value() + value.value() * self.weights[idx].value();
         }
 
         T::new(output.value() + self.bias.value())
     }
+}
 
-    pub fn sub(&mut self, inputs: Vec<T>) -> T {
+impl<T> Layer<T>
+where
+    T: FPrimitive<T> + std::ops::Mul<T, Output = T> + std::ops::Add<T, Output = T>,
+{
+    pub fn new(neurons: usize, input_dim: Vec<usize>) -> Layer<T> {
+        let n: Neuron<T> = Neuron::new(input_dim);
 
+        Layer {
+            neurons: vec![Neuron::new(input_dim); neurons],
+        }
+    }
 
+    pub fn forward(&mut self, input: Vec<T>) -> Vec<T> {
+        let mut output = Vec::new();
+
+        for neuron in self.neurons.iter() {
+            output.push(neuron.sum(input));
+        }
+
+        output
     }
 }
