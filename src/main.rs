@@ -1,7 +1,7 @@
 pub mod types;
 
 use crate::types::Neuron;
-use crate::types::primitives::{_F8, _F16, _F32};
+use crate::types::primitives::{_F16, _F32, _F8};
 
 fn main() {
     let neuron: Neuron<_F32>;

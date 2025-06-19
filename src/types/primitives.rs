@@ -4,69 +4,126 @@ use float16::f16;
 use rand::Rng;
 use rand::distr::{Distribution, StandardUniform};
 
+
+pub trait Primitive<T> {
+    fn new(val: f32) -> Self;
+    fn value(&self) -> &T;
+    fn default() -> Self;
+}
+
 #[derive(Debug)]
-pub struct _F32(f32);
+pub struct _F32 {
+    pub val: f32,
+}
 #[derive(Debug)]
-pub struct _F16(f16);
+pub struct _F16 {
+    pub val: f16,
+}
 #[derive(Debug)]
-pub struct _F8(F8E4M3);
+pub struct _F8 {
+    pub val: F8E4M3
+}
 
-impl From<_F32> for f32 {
-    fn from(f: _F32) -> Self {
-        f.into()
+impl Primitive<f32> for _F32 {
+    fn new(val: f32) -> Self {
+        _F32 { val }
+    }
+    fn value(&self) -> &f32 {
+        &self.val
+    }
+    fn default() -> _F32 {
+        _F32::new(0.0f32)
     }
 }
 
-impl From<f32> for _F32 {
-    fn from(f: f32) -> Self {
-        _F32(f)
+impl Primitive<f16> for _F16 {
+    fn new(val: f32) -> Self {
+        _F16 { val: f16::from_f32(val) }
+    }
+    fn value(&self) -> &f16 {
+        &self.val
+    }
+    fn default() -> _F16 {
+        _F16::new(0.0f32)
     }
 }
 
-impl From<_F16> for f32 {
-    fn from(f: _F16) -> Self {
-        f.into()
+impl Primitive<F8E4M3> for _F8 {
+    fn new(val: f32) -> Self {
+        _F8 { val: float8::F8E4M3::from_f32(val) }
+    }
+    fn value(&self) -> &F8E4M3 {
+        &self.val
+    }
+    fn default() -> _F8 {
+        _F8::new(0.0f32)
     }
 }
 
-impl From<f32> for _F16 {
-    fn from(f: f32) -> Self {
-        _F16(float16::f16::from_f32(f))
+
+impl _F32 {
+    pub fn new(val: f32) -> _F32 {
+        _F32{val}
+    }
+
+    pub fn value(&self) -> &f32 {
+        &self.val
     }
 }
 
-impl From<_F32> for _F16 {
-    fn from(f: _F32) -> Self {
-        _F16(float16::f16::from_f32(f.into()))
+impl _F16 {
+    pub fn new(val: f32) -> _F16 {
+        _F16{val:f16::from_f32(val)}
+    }
+    pub fn value(&self) -> &f16 {
+        &self.val
     }
 }
 
-impl From<f32> for _F8 {
-    fn from(f: f32) -> Self {
-        _F8(float8::F8E4M3::from_f32(f))
+impl _F8 {
+    pub fn new(val: f32) -> _F8 {
+        _F8{val:float8::F8E4M3::from_f32(val)}
+    }
+    pub fn value(&self) -> &F8E4M3 {
+        &self.val
     }
 }
 
-impl From<_F8> for f32 {
-    fn from(f: _F8) -> Self {
-        f.into()
-    }
-}
+// Distribution for Random Number generation
 
 impl Distribution<_F32> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> _F32 {
-        _F32(rng.random::<f32>())
+        _F32::new(rng.random::<f32>())
+    }
+}
+
+impl Distribution<StandardUniform> for _F32 {
+    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> StandardUniform {
+        StandardUniform
     }
 }
 
 impl Distribution<_F16> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> _F16 {
-        _F16(f16::from_f32(rng.random::<f32>()))
+        _F16::new(rng.random::<f32>())
+
+    }
+}
+
+impl Distribution<StandardUniform> for _F16 {
+    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> StandardUniform {
+        StandardUniform
     }
 }
 
 impl Distribution<_F8> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> _F8 {
-        _F8(rng.random::<f32>().into())
+        _F8::new(rng.random::<f32>())
+    }
+}
+
+impl Distribution<StandardUniform> for _F8 {
+    fn sample<R: Rng + ?Sized>(&self, _rng: &mut R) -> StandardUniform {
+        StandardUniform
     }
 }

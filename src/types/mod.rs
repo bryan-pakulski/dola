@@ -1,5 +1,10 @@
+pub mod ops;
 pub mod primitives;
+use crate::types::primitives::{_F8, _F16, _F32};
+use float8::F8E4M3;
 use rand::{distr::StandardUniform, prelude::*};
+
+use crate::types::primitives::Primitive;
 
 #[derive(Debug)]
 pub struct Neuron<T> {
@@ -10,7 +15,7 @@ pub struct Neuron<T> {
 
 impl<T> Neuron<T>
 where
-    T: From<T> + rand::distr::Distribution<StandardUniform>,
+    T: Primitive<f32> + Primitive<float16::f16> + Primitive<F8E4M3>,
     StandardUniform: rand::distr::Distribution<T>,
 {
     pub fn init(dimensions: Vec<usize>) -> Neuron<T> {
@@ -25,5 +30,26 @@ where
             weights,
             bias,
         }
+    }
+
+    pub fn sum(&mut self, inputs: Vec<T>) -> T {
+        assert_eq!(
+            inputs.len(),
+            self.weights.len(),
+            "Neuron received invalid input shape!"
+        );
+
+        let mut output = T::default(); // TODO: figure out how to initialize using `Default`
+
+        for (idx, value) in inputs.iter().enumerate() {
+            output = T::new(output.value() + value.value() * self.weights[idx].value());
+        }
+
+        T::new(output.value() + self.bias.value())
+    }
+
+    pub fn sub(&mut self, inputs: Vec<T>) -> T {
+
+
     }
 }
