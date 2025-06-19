@@ -1,47 +1,29 @@
-// The prelude import enables methods we use below, specifically
-// Rng::random, Rng::sample, SliceRandom::shuffle and IndexedRandom::choose.
-use rand::prelude::*;
+pub mod primitives;
+use rand::{distr::StandardUniform, prelude::*};
 
-use std::any::TypeId;
-use {float16::f16, float8::F8E4M3};
-
+#[derive(Debug)]
 pub struct Neuron<T> {
-    inputs: Vec<T>,
+    dims: Vec<usize>,
     weights: Vec<T>,
-    bias: T
+    bias: T,
 }
 
-enum Precision {
-    F32(f32),
-    F16(float16::f16),
-    F8(float8::F8E4M3),
-}
-
-impl<T> Neuron<T> {
-    fn init(&self, inputs: Vec<Precision>) -> Neuron<Precision> {
+impl<T> Neuron<T>
+where
+    T: From<T> + rand::distr::Distribution<StandardUniform>,
+    StandardUniform: rand::distr::Distribution<T>,
+{
+    pub fn init(dimensions: Vec<usize>) -> Neuron<T> {
         let mut rng = rand::rng();
-        let mut ne: Neuron<Precision>;
-        for input in inputs {
-            ne.inputs.push(input);
 
-            match T {
-                Precision::F32(T) => {
-                    ne.weights.push(Precision::F32(rng.random::<f32>()));
-                },
-                Precision::F16 => {
-                    ne.weights.push(rng.random::<float16>());
-                },
-                Precision::F8 => {
-                    ne.weights.push(rng.random::<float8>());
-                },
-                _ => {
-                    println!("Invalid type!")
-                }
-            }
-            ne.weights.push(rng.random::<Precision>());
+        let bias = T::from(rng.random::<T>()); // Initialize bias as f32 and convert to T
+        let size = dimensions.iter().copied().reduce(|a, b| a * b).unwrap();
+        let weights: Vec<T> = (0..size).map(|_| T::from(rng.random::<T>())).collect();
+
+        Neuron {
+            dims: dimensions,
+            weights,
+            bias,
         }
-
-        ne
     }
 }
-
