@@ -1,12 +1,7 @@
-use std::f32::consts::E;
-
 use rand::distr::StandardUniform;
 
-use super::primitives::{_F8, _F16, _F32, FPrimitive};
-
-pub trait Forward<T> {
-    fn forward(&self, input: &Vec<T>) -> Vec<T>;
-}
+use super::Forward;
+use super::primitives::FPrimitive;
 
 pub struct Relu {}
 pub struct SoftMax {}

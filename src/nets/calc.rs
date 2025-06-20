@@ -1,6 +1,7 @@
-use crate::nn::DenseLayer;
-use crate::nn::activations::{Forward, Relu};
-use crate::nn::primitives::{_F8, _F16, _F32, FPrimitive};
+use crate::nn::Forward;
+use crate::nn::activations::Relu;
+use crate::nn::nn::DenseLayer;
+use crate::nn::primitives::FPrimitive;
 use rand::distr::StandardUniform;
 
 pub struct Calculator<T> {
@@ -28,7 +29,7 @@ where
         Calculator { l0, l1, l2, l3 }
     }
 
-    pub fn forward(&mut self, input: &Vec<T>, output: &Vec<T>) -> Vec<T> {
+    pub fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
         let relu = Relu::new();
 
         let mut s = self.l0.forward(input.clone());
