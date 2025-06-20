@@ -9,9 +9,9 @@ pub struct Neuron<T> {
 
 #[derive(Debug, Clone)]
 pub struct DenseLayer<T> {
-    layer_name: String,
-    input_dim: Vec<usize>,
-    neurons: Vec<Neuron<T>>,
+    pub layer_name: String,
+    pub input_dim: Vec<usize>,
+    pub neurons: Vec<Neuron<T>>,
 }
 
 impl<T> Neuron<T>
@@ -42,6 +42,10 @@ where
         }
 
         T::new(output.value() + self.bias.value())
+    }
+
+    pub fn params(&self) -> usize {
+        self.weights.len() + 1
     }
 }
 

@@ -27,16 +27,16 @@ fn main() {
     let loss_fn = MeanSquaredError {};
 
     for i in 0..1000 {
-        println!("Epoch {}", i);
+        //println!("Epoch {}", i);
 
         for (input, output) in train_dataset.iter() {
             let prediction: Vec<_F32> = cnet.forward(input);
             let loss_value: f32 = loss_fn.forward(&prediction, output);
 
             // Compute loss
-            println!("Prediction: {:?}", prediction);
-            println!("Output: {:?}", output);
-            println!("Loss: {}", loss_value);
+            // println!("Prediction: {:?}", prediction);
+            // println!("Output: {:?}", output);
+            // println!("Loss: {}", loss_value);
         }
     }
 }

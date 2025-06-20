@@ -1,6 +1,6 @@
 use crate::nn::Forward;
 use crate::nn::activations::Relu;
-use crate::nn::nn::DenseLayer;
+use crate::nn::nn::{DenseLayer, Neuron};
 use crate::nn::primitives::FPrimitive;
 use rand::distr::StandardUniform;
 
@@ -25,6 +25,15 @@ where
         let mut l1: DenseLayer<T> = DenseLayer::new("l1", 25, vec![5, 5]);
         let mut l2: DenseLayer<T> = DenseLayer::new("l2", 25, vec![5, 5]);
         let mut l3: DenseLayer<T> = DenseLayer::new("l3", 1, vec![5, 5]);
+
+        let mut n_count = 0;
+        for layer in vec![&mut l0, &mut l1, &mut l2, &mut l3] {
+            for neuron in layer.neurons.iter_mut() {
+                n_count += neuron.params();
+            }
+        }
+
+        println!("Parameter Count: {}", n_count);
 
         Calculator { l0, l1, l2, l3 }
     }
