@@ -79,6 +79,8 @@ where
         }
 
         let mut output = Vec::new();
+
+        // TODO: this should be a marix dot product
         for neuron in self.neurons.iter() {
             output.push(neuron.sum(&input));
         }
