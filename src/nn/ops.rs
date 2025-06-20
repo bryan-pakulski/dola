@@ -1,4 +1,4 @@
-use crate::types::{_F8, _F16, _F32};
+use crate::nn::{_F8, _F16, _F32};
 use std::ops::{Add, Mul, Sub};
 
 use super::primitives::FPrimitive;

@@ -1,14 +1,34 @@
-pub mod types;
+pub mod nets;
+pub mod nn;
 
-use types::primitives::FPrimitive as _;
-
-use crate::types::primitives::{_F8, _F16, _F32};
-use crate::types::{Layer, Neuron};
+use nets::calc::Calculator;
+use nn::primitives::{_F8, _F16, _F32, FPrimitive};
+use rand::Rng;
 
 fn main() {
-    let mut l1: Layer<_F8> = Layer::new(12, vec![1, 3]);
-    let mut n1: Neuron<_F8> = Neuron::new(vec![1, 3]);
+    let mut train_dataset: Vec<(Vec<_F32>, Vec<_F32>)> = Vec::new();
+    let mut rng = rand::rng();
 
-    let input: Vec<_F8> = vec![_F8::new(1.0f32), _F8::new(2.0f32), _F8::new(3.03f32)];
-    println!("n1.sum(input): {:?}", n1.sum(input));
+    for _ in 0..1000 {
+        // Generate random numbers to add and the expected output
+        let a: i32 = rng.random_range(0..10000);
+        let b: i32 = rng.random_range(0..10000);
+        let c: i32 = a + b;
+
+        let input: Vec<_F32> = vec![_F32::new(a as f32), _F32::new(b as f32)];
+        let output: Vec<_F32> = vec![_F32::new(c as f32)];
+
+        train_dataset.push((input, output));
+    }
+
+    let mut cnet: Calculator<_F32>;
+    cnet = Calculator::new();
+
+    for i in 0..1000 {
+        println!("Epoch {}", i);
+
+        for (input, output) in train_dataset.iter() {
+            cnet.forward(input, output);
+        }
+    }
 }
