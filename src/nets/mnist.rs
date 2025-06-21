@@ -4,14 +4,14 @@ use crate::nn::nn::{DenseLayer, Neuron};
 use crate::nn::primitives::FPrimitive;
 use rand::distr::StandardUniform;
 
-pub struct Calculator<T> {
+pub struct Mnist<T> {
     l0: DenseLayer<T>,
     l1: DenseLayer<T>,
     l2: DenseLayer<T>,
     l3: DenseLayer<T>,
 }
 
-impl<T> Calculator<T>
+impl<T> Mnist<T>
 where
     T: FPrimitive<T>
         + std::ops::Mul<T, Output = T>
@@ -22,7 +22,7 @@ where
         + std::cmp::PartialOrd<f32>,
     StandardUniform: rand::distr::Distribution<T>,
 {
-    pub fn new() -> Calculator<T> {
+    pub fn new() -> Mnist<T> {
         let mut l0: DenseLayer<T> = DenseLayer::new("l0", 256, vec![28, 28]);
         let mut l1: DenseLayer<T> = DenseLayer::new("l1", 30, vec![256, 1]);
         let mut l2: DenseLayer<T> = DenseLayer::new("l2", 30, vec![30, 1]);
@@ -37,7 +37,7 @@ where
 
         println!("Parameter Count: {}", n_count);
 
-        Calculator { l0, l1, l2, l3 }
+        Mnist { l0, l1, l2, l3 }
     }
 
     pub fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
