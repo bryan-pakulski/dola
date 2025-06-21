@@ -1,47 +1,134 @@
+use crate::{_F8, _F16, _F32, FPrimitive};
+use glob::glob;
+use std::collections::HashMap;
+
 // Expects a folder with subfolders containing different image classes, subfolder names are used as label names
 pub trait ClassificationFolderLoader<T> {
-    fn load(&self, path: &str) -> Self;
+    fn load(&mut self, path: &str);
     fn shuffle(&self);
-    fn get(&self, index: usize) -> Option<(&T, &String)>;
-    fn next(&mut self) -> Option<(&T, &String)>;
+    fn get(&self, index: usize) -> Option<(Vec<T>, Vec<T>)>;
+    fn next(&mut self) -> Option<(Vec<T>, Vec<T>)>;
+    fn load_image(&self, path: &str) -> Vec<T>;
 }
 
 pub struct Loader<T> {
-    data: Vec<(T, String)>,
-    map: Vec<usize>,
+    images: Vec<(String, usize)>,
+    index_order: Vec<usize>,
+    label_map: HashMap<String, usize>,
+    label_count: usize,
     iter: usize,
+    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ClassificationFolderLoader<T> for Loader<T> {
-    fn load(&self, path: &str) -> Self {
+impl<T> Loader<T> {
+    pub fn new() -> Loader<T> {
         let data_loader: Loader<T> = Loader {
-            data: vec![],
-            map: vec![0; self.data.len()],
+            images: vec![],
+            index_order: vec![0; 0],
+            label_map: vec![].into_iter().collect(),
             iter: 0,
+            label_count: 0,
+            _phantom: std::marker::PhantomData,
         };
-
-        // Load data from subfolders, create a image and label pair
 
         data_loader
     }
+
+    pub fn size(&self) -> usize {
+        self.images.len()
+    }
+}
+
+impl<T> ClassificationFolderLoader<T> for Loader<T>
+where
+    T: FPrimitive<T> + From<f32> + From<_F32> + From<_F16> + From<_F8> + Clone,
+{
+    fn load(&mut self, path: &str) {
+        // Load data from subfolders, create a image and label pair
+        let blob_query = path.to_owned() + "/**/*.jpg";
+        for entry in glob(blob_query.as_str()).expect(
+            format!(
+                "Failed to read glob pattern: {}, unable to load dataset: {}",
+                blob_query, path
+            )
+            .as_str(),
+        ) {
+            match entry {
+                Ok(path) => match path.parent() {
+                    Some(parent) => {
+                        let label = parent.file_name().unwrap().to_str().unwrap();
+                        let label_idx: usize;
+
+                        if self.label_map.contains_key(label) {
+                            label_idx = *self.label_map.get(label).unwrap();
+                        } else {
+                            label_idx = self.label_count;
+                            self.label_count += 1;
+                        }
+
+                        self.label_map.insert(label.to_string(), label_idx);
+                        self.images
+                            .push((path.to_str().unwrap().to_string(), label_idx));
+                    }
+                    None => {
+                        println!(
+                            "Error: No parent folder found for {}",
+                            path.to_str().unwrap()
+                        );
+                    }
+                },
+                Err(e) => println!("Error: {}", e),
+            }
+        }
+
+        println!("Loaded {} images", self.images.len());
+        println!("Loaded {} labels", self.label_count);
+        self.index_order = (0..self.images.len()).collect();
+    }
+
     fn shuffle(&self) {
         // TODO: shuffle the map which we use to index the data
     }
 
-    fn get(&self, index: usize) -> Option<(&T, &String)> {
-        match self.map.get(index) {
-            Some(idx) => self.data.get(*idx).map(|(image, label)| (image, label)),
+    fn load_image(&self, path: &str) -> Vec<T> {
+        let mut img_data: Vec<T> = vec![];
+
+        let img = image::open(path).unwrap();
+        let raw_img = img.to_luma32f().into_raw();
+
+        for i in 0..raw_img.len() {
+            img_data.push((raw_img[i] / 255.0).into());
+        }
+
+        img_data
+    }
+
+    fn get(&self, index: usize) -> Option<(Vec<T>, Vec<T>)> {
+        match self.index_order.get(index) {
+            Some(idx) => {
+                let metadata: &(String, usize) = self.images.get(*idx).unwrap();
+                let img_path = metadata.0.as_str();
+                let label = metadata.1;
+                let img_data: Vec<T> = self.load_image(img_path);
+
+                let mut output_data: Vec<T> = vec![T::default(); self.label_count];
+                output_data[label].set(1.0f32.into());
+
+                Some((img_data, output_data))
+            }
             None => None,
         }
     }
 
-    fn next(&mut self) -> Option<(&T, &String)> {
-        if self.iter < self.map.len() {
-            let idx = self.map[self.iter];
+    fn next(&mut self) -> Option<(Vec<T>, Vec<T>)> {
+        if self.iter < self.index_order.len() {
+            let idx = self.index_order[self.iter];
             let data = self.get(idx);
             self.iter += 1;
             data
         } else {
+            println!("No more data");
+            self.iter = 0;
             None
         }
     }

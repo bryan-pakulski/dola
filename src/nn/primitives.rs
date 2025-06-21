@@ -13,6 +13,7 @@ pub trait FPrimitive<T> {
     fn default() -> Self;
     fn value(&self) -> T;
     fn max(&self, val: T) -> T;
+    fn set(&mut self, val: T);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -42,6 +43,9 @@ impl FPrimitive<f32> for _F32 {
     fn max(&self, val: f32) -> f32 {
         if self.val > val { self.val } else { val }
     }
+    fn set(&mut self, val: f32) {
+        self.val = val;
+    }
 }
 
 impl FPrimitive<_F32> for _F32 {
@@ -56,6 +60,9 @@ impl FPrimitive<_F32> for _F32 {
     }
     fn max(&self, val: _F32) -> _F32 {
         if self.val > val.val { *self } else { val }
+    }
+    fn set(&mut self, val: _F32) {
+        self.val = val.val;
     }
 }
 
@@ -76,6 +83,9 @@ impl FPrimitive<f16> for _F32 {
             val
         }
     }
+    fn set(&mut self, val: f16) {
+        self.val = val.to_f32();
+    }
 }
 
 impl FPrimitive<F8E4M3> for _F32 {
@@ -94,6 +104,15 @@ impl FPrimitive<F8E4M3> for _F32 {
         } else {
             val
         }
+    }
+    fn set(&mut self, val: F8E4M3) {
+        self.val = val.to_f32();
+    }
+}
+
+impl From<f32> for _F32 {
+    fn from(f: f32) -> Self {
+        _F32::new(f)
     }
 }
 
@@ -158,6 +177,9 @@ impl FPrimitive<f32> for _F16 {
             val
         }
     }
+    fn set(&mut self, val: f32) {
+        self.val = float16::f16::from_f32(val);
+    }
 }
 
 impl FPrimitive<f16> for _F16 {
@@ -173,6 +195,9 @@ impl FPrimitive<f16> for _F16 {
     fn max(&self, val: f16) -> f16 {
         if self.val > val { self.val } else { val }
     }
+    fn set(&mut self, val: f16) {
+        self.val = val;
+    }
 }
 
 impl FPrimitive<_F16> for _F16 {
@@ -187,6 +212,9 @@ impl FPrimitive<_F16> for _F16 {
     }
     fn max(&self, val: _F16) -> _F16 {
         if self.val > val.val { *self } else { val }
+    }
+    fn set(&mut self, val: _F16) {
+        self.val = val.val;
     }
 }
 
@@ -208,6 +236,9 @@ impl FPrimitive<F8E4M3> for _F16 {
         } else {
             val
         }
+    }
+    fn set(&mut self, val: F8E4M3) {
+        self.val = f16::from_f32(val.to_f32());
     }
 }
 
@@ -272,6 +303,9 @@ impl FPrimitive<f32> for _F8 {
             val
         }
     }
+    fn set(&mut self, val: f32) {
+        self.val = float8::F8E4M3::from_f32(val);
+    }
 }
 
 impl FPrimitive<f16> for _F8 {
@@ -293,6 +327,9 @@ impl FPrimitive<f16> for _F8 {
             val
         }
     }
+    fn set(&mut self, val: f16) {
+        self.val = float8::F8E4M3::from_f32(val.to_f32());
+    }
 }
 
 impl FPrimitive<F8E4M3> for _F8 {
@@ -308,6 +345,9 @@ impl FPrimitive<F8E4M3> for _F8 {
     fn max(&self, val: F8E4M3) -> F8E4M3 {
         if self.val > val { self.val } else { val }
     }
+    fn set(&mut self, val: F8E4M3) {
+        self.val = val;
+    }
 }
 
 impl FPrimitive<_F8> for _F8 {
@@ -322,6 +362,9 @@ impl FPrimitive<_F8> for _F8 {
     }
     fn max(&self, val: _F8) -> _F8 {
         if self.val > val.val { *self } else { val }
+    }
+    fn set(&mut self, val: _F8) {
+        self.val = val.val;
     }
 }
 

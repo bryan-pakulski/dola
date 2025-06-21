@@ -23,8 +23,8 @@ where
     StandardUniform: rand::distr::Distribution<T>,
 {
     pub fn new() -> Calculator<T> {
-        let mut l0: DenseLayer<T> = DenseLayer::new("l0", 784, vec![28, 28]);
-        let mut l1: DenseLayer<T> = DenseLayer::new("l1", 30, vec![784, 1]);
+        let mut l0: DenseLayer<T> = DenseLayer::new("l0", 256, vec![28, 28]);
+        let mut l1: DenseLayer<T> = DenseLayer::new("l1", 30, vec![256, 1]);
         let mut l2: DenseLayer<T> = DenseLayer::new("l2", 30, vec![30, 1]);
         let mut l3: DenseLayer<T> = DenseLayer::new("l3", 10, vec![30, 1]);
 

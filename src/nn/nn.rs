@@ -75,8 +75,10 @@ where
         let size = self.input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
         if size != input.len() {
             panic!(
-                "Layer {} received invalid input shape! Expected {:?}",
-                self.layer_name, self.input_dim
+                "Layer {} received invalid input shape! Expected {:?} got {:?}",
+                self.layer_name,
+                self.input_dim,
+                input.len()
             );
         }
 
