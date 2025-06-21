@@ -12,6 +12,7 @@ pub struct DenseLayer<T> {
     pub layer_name: String,
     pub input_dim: Vec<usize>,
     pub neurons: Vec<Neuron<T>>,
+    pub freeze: bool,
 }
 
 impl<T> Neuron<T>
@@ -61,6 +62,7 @@ where
             layer_name: layer_name.into(),
             input_dim: input_dim.clone(),
             neurons: vec![],
+            freeze: false,
         };
 
         for _ in 0..neurons {

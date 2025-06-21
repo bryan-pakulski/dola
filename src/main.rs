@@ -1,6 +1,8 @@
+pub mod dataloader;
 pub mod nets;
 pub mod nn;
 
+use dataloader::classification::{ClassificationFolderLoader, Loader};
 use nets::calc::Calculator;
 use nn::loss::{LossForward, MeanSquaredError};
 use nn::primitives::{_F8, _F16, _F32, FPrimitive};
@@ -16,7 +18,7 @@ fn main() {
         let b: i32 = rng.random_range(0..10000);
         let c: i32 = a + b;
 
-        let input: Vec<_F32> = vec![_F32::new(a as f32), _F32::new(b as f32)];
+        let input: Vec<_F32> = vec![];
         let output: Vec<_F32> = vec![_F32::new(c as f32)];
 
         train_dataset.push((input, output));
