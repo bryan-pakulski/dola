@@ -19,6 +19,10 @@ where
         + std::ops::Div<T, Output = T>
         + Clone
         + Copy
+        + Future
+        + Send
+        + Sync
+        + 'static
         + std::cmp::PartialOrd<f32>,
     StandardUniform: rand::distr::Distribution<T>,
 {
@@ -40,17 +44,17 @@ where
         Mnist { l0, l1, l2, l3 }
     }
 
-    pub fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
+    pub async fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
         let relu = Relu::new();
         let smax: SoftMax = SoftMax::new();
 
-        let mut s = self.l0.forward(input.clone());
+        let mut s = self.l0.forward(input.clone()).await;
         s = relu.forward(&s);
-        s = self.l1.forward(s);
+        s = self.l1.forward(s).await;
         s = relu.forward(&s);
-        s = self.l2.forward(s);
+        s = self.l2.forward(s).await;
         s = relu.forward(&s);
-        s = self.l3.forward(s);
+        s = self.l3.forward(s).await;
         s = smax.forward(&s);
 
         s

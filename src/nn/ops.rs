@@ -3,6 +3,8 @@ use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use super::primitives::FPrimitive;
 
+// MULTI Threaded & hardware accelerated ops
+
 impl Mul for _F32 {
     type Output = Self;
 

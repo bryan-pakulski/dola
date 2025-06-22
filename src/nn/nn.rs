@@ -1,6 +1,8 @@
 use crate::nn::primitives::FPrimitive;
 use rand::{distr::StandardUniform, prelude::*};
-
+use std::ops::Deref;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 #[derive(Debug, Clone)]
 pub struct Neuron<T> {
     weights: Vec<T>,
@@ -11,7 +13,7 @@ pub struct Neuron<T> {
 pub struct DenseLayer<T> {
     pub layer_name: String,
     pub input_dim: Vec<usize>,
-    pub neurons: Vec<Neuron<T>>,
+    pub neurons: Vec<Arc<Neuron<T>>>,
     pub freeze: bool,
 }
 
@@ -29,7 +31,7 @@ where
         Neuron { weights, bias }
     }
 
-    pub fn sum(&self, inputs: &Vec<T>) -> T {
+    async fn sum(&self, inputs: Arc<Vec<T>>) -> T {
         assert_eq!(
             inputs.len(),
             self.weights.len(),
@@ -52,26 +54,31 @@ where
 
 impl<T> DenseLayer<T>
 where
-    T: FPrimitive<T> + std::ops::Mul<T, Output = T> + std::ops::Add<T, Output = T> + Clone,
+    T: FPrimitive<T>
+        + std::ops::Mul<T, Output = T>
+        + std::ops::Add<T, Output = T>
+        + Clone
+        + Future
+        + Send
+        + Sync
+        + 'static,
     StandardUniform: rand::distr::Distribution<T>,
 {
     pub fn new(layer_name: &str, neurons: usize, input_dim: Vec<usize>) -> DenseLayer<T> {
         let size = input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
-
         let mut l: DenseLayer<T> = DenseLayer {
             layer_name: layer_name.into(),
             input_dim: input_dim.clone(),
             neurons: vec![],
             freeze: false,
         };
-
         for _ in 0..neurons {
-            l.neurons.push(Neuron::new(size));
+            l.neurons.push(Arc::new(Neuron::new(size)));
         }
         l
     }
 
-    pub fn forward(&mut self, input: Vec<T>) -> Vec<T> {
+    pub async fn forward(&self, input: Vec<T>) -> Vec<T> {
         let size = self.input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
         if size != input.len() {
             panic!(
@@ -81,14 +88,24 @@ where
                 input.len()
             );
         }
-
-        let mut output = Vec::new();
-
-        // TODO: this should be a marix dot product
+        let shared_data = Arc::new(Mutex::new(Vec::new()));
+        let shared_input = Arc::new(input);
+        let mut handles = Vec::new();
         for neuron in self.neurons.iter() {
-            output.push(neuron.sum(&input));
+            let shared_data_clone = Arc::clone(&shared_data);
+            let input_arc = Arc::clone(&shared_input);
+            let neuron_clone = Arc::clone(neuron);
+            let handle = tokio::spawn(async move {
+                let nsum = neuron_clone.sum(input_arc).await;
+                let mut data = shared_data_clone.lock().await;
+                data.push(nsum);
+            });
+            handles.push(handle);
         }
-
-        output
+        for handle in handles {
+            handle.await.unwrap();
+        }
+        let data = shared_data.lock().await;
+        data.deref().clone()
     }
 }
