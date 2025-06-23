@@ -19,7 +19,6 @@ where
         + std::ops::Div<T, Output = T>
         + Clone
         + Copy
-        + Future
         + Send
         + Sync
         + 'static
@@ -27,10 +26,10 @@ where
     StandardUniform: rand::distr::Distribution<T>,
 {
     pub fn new() -> Mnist<T> {
-        let mut l0: DenseLayer<T> = DenseLayer::new("l0", 256, vec![28, 28]);
-        let mut l1: DenseLayer<T> = DenseLayer::new("l1", 30, vec![256, 1]);
-        let mut l2: DenseLayer<T> = DenseLayer::new("l2", 30, vec![30, 1]);
-        let mut l3: DenseLayer<T> = DenseLayer::new("l3", 10, vec![30, 1]);
+        let mut l0: DenseLayer<T> = DenseLayer::new("l0", 784, vec![28, 28], false);
+        let mut l1: DenseLayer<T> = DenseLayer::new("l1", 256, vec![784, 1], true);
+        let mut l2: DenseLayer<T> = DenseLayer::new("l2", 128, vec![256, 1], true);
+        let mut l3: DenseLayer<T> = DenseLayer::new("l3", 10, vec![128, 1], false);
 
         let mut n_count = 0;
         for layer in vec![&mut l0, &mut l1, &mut l2, &mut l3] {

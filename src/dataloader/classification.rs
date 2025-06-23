@@ -2,10 +2,13 @@ use crate::{_F8, _F16, _F32, FPrimitive};
 use glob::glob;
 use std::collections::HashMap;
 
+use rand::rng;
+use rand::seq::SliceRandom;
+
 // Expects a folder with subfolders containing different image classes, subfolder names are used as label names
 pub trait ClassificationFolderLoader<T> {
     fn load(&mut self, path: &str);
-    fn shuffle(&self);
+    fn shuffle(&mut self);
     fn get(&self, index: usize) -> Option<(Vec<T>, Vec<T>)>;
     fn next(&mut self) -> Option<(Vec<T>, Vec<T>)>;
     fn load_image(&self, path: &str) -> Vec<T>;
@@ -86,8 +89,9 @@ where
         self.index_order = (0..self.images.len()).collect();
     }
 
-    fn shuffle(&self) {
-        // TODO: shuffle the map which we use to index the data
+    fn shuffle(&mut self) {
+        let mut rng = rng();
+        self.index_order.shuffle(&mut rng);
     }
 
     fn load_image(&self, path: &str) -> Vec<T> {

@@ -7,6 +7,7 @@ use tokio::sync::Mutex;
 pub struct Neuron<T> {
     weights: Vec<T>,
     bias: T,
+    with_bias: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -22,16 +23,20 @@ where
     T: FPrimitive<T> + std::ops::Mul<T, Output = T> + std::ops::Add<T, Output = T> + Clone,
     StandardUniform: rand::distr::Distribution<T>,
 {
-    pub fn new(inputs: usize) -> Neuron<T> {
+    pub fn new(inputs: usize, with_bias: bool) -> Neuron<T> {
         let mut rng = rand::rng();
 
-        let bias = T::from(rng.random::<T>()); // Initialize bias as f32 and convert to T
+        let bias = T::from(rng.random::<T>());
         let weights: Vec<T> = (0..inputs).map(|_| T::from(rng.random::<T>())).collect();
 
-        Neuron { weights, bias }
+        Neuron {
+            weights,
+            bias,
+            with_bias,
+        }
     }
 
-    async fn sum(&self, inputs: Arc<Vec<T>>) -> T {
+    pub async fn sum(&self, inputs: Arc<Vec<T>>) -> T {
         assert_eq!(
             inputs.len(),
             self.weights.len(),
@@ -44,7 +49,11 @@ where
             output = output.value() + value.value() * self.weights[idx].value();
         }
 
-        T::new(output.value() + self.bias.value())
+        if self.with_bias {
+            output = output + self.bias.value();
+        }
+
+        output
     }
 
     pub fn params(&self) -> usize {
@@ -58,13 +67,17 @@ where
         + std::ops::Mul<T, Output = T>
         + std::ops::Add<T, Output = T>
         + Clone
-        + Future
         + Send
         + Sync
         + 'static,
     StandardUniform: rand::distr::Distribution<T>,
 {
-    pub fn new(layer_name: &str, neurons: usize, input_dim: Vec<usize>) -> DenseLayer<T> {
+    pub fn new(
+        layer_name: &str,
+        neurons: usize,
+        input_dim: Vec<usize>,
+        with_bias: bool,
+    ) -> DenseLayer<T> {
         let size = input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
         let mut l: DenseLayer<T> = DenseLayer {
             layer_name: layer_name.into(),
@@ -73,7 +86,7 @@ where
             freeze: false,
         };
         for _ in 0..neurons {
-            l.neurons.push(Arc::new(Neuron::new(size)));
+            l.neurons.push(Arc::new(Neuron::new(size, with_bias)));
         }
         l
     }
