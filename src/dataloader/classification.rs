@@ -131,7 +131,6 @@ where
             self.iter += 1;
             data
         } else {
-            println!("No more data");
             self.iter = 0;
             None
         }

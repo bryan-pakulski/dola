@@ -31,29 +31,33 @@ where
         let mut l2: DenseLayer<T> = DenseLayer::new("l2", 128, vec![256, 1], true);
         let mut l3: DenseLayer<T> = DenseLayer::new("l3", 10, vec![128, 1], false);
 
-        let mut n_count = 0;
+        let mut params = 0;
+        let mut neurons: usize = 0;
+
         for layer in vec![&mut l0, &mut l1, &mut l2, &mut l3] {
             for neuron in layer.neurons.iter_mut() {
-                n_count += neuron.params();
+                params += neuron.params();
+                neurons += 1;
             }
         }
 
-        println!("Parameter Count: {}", n_count);
+        println!("Neurons: {}", neurons);
+        println!("Parameter Count: {}", params);
 
         Mnist { l0, l1, l2, l3 }
     }
 
-    pub async fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
+    pub fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
         let relu = Relu::new();
         let smax: SoftMax = SoftMax::new();
 
-        let mut s = self.l0.forward(input.clone()).await;
+        let mut s = self.l0.forward(input.clone());
         s = relu.forward(&s);
-        s = self.l1.forward(s).await;
+        s = self.l1.forward(s);
         s = relu.forward(&s);
-        s = self.l2.forward(s).await;
+        s = self.l2.forward(s);
         s = relu.forward(&s);
-        s = self.l3.forward(s).await;
+        s = self.l3.forward(s);
         s = smax.forward(&s);
 
         s

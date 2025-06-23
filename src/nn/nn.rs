@@ -2,7 +2,9 @@ use crate::nn::primitives::FPrimitive;
 use rand::{distr::StandardUniform, prelude::*};
 use std::ops::Deref;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+
+use rayon::prelude::*;
+
 #[derive(Debug, Clone)]
 pub struct Neuron<T> {
     weights: Vec<T>,
@@ -36,7 +38,7 @@ where
         }
     }
 
-    pub async fn sum(&self, inputs: Arc<Vec<T>>) -> T {
+    pub fn sum(&self, inputs: &Vec<T>) -> T {
         assert_eq!(
             inputs.len(),
             self.weights.len(),
@@ -45,6 +47,7 @@ where
 
         let mut output = T::default();
 
+        // TODO: this could potentially also be done in parallel
         for (idx, value) in inputs.iter().enumerate() {
             output = output.value() + value.value() * self.weights[idx].value();
         }
@@ -91,7 +94,7 @@ where
         l
     }
 
-    pub async fn forward(&self, input: Vec<T>) -> Vec<T> {
+    pub fn forward(&self, input: Vec<T>) -> Vec<T> {
         let size = self.input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
         if size != input.len() {
             panic!(
@@ -101,24 +104,13 @@ where
                 input.len()
             );
         }
-        let shared_data = Arc::new(Mutex::new(Vec::new()));
-        let shared_input = Arc::new(input);
-        let mut handles = Vec::new();
-        for neuron in self.neurons.iter() {
-            let shared_data_clone = Arc::clone(&shared_data);
-            let input_arc = Arc::clone(&shared_input);
-            let neuron_clone = Arc::clone(neuron);
-            let handle = tokio::spawn(async move {
-                let nsum = neuron_clone.sum(input_arc).await;
-                let mut data = shared_data_clone.lock().await;
-                data.push(nsum);
-            });
-            handles.push(handle);
-        }
-        for handle in handles {
-            handle.await.unwrap();
-        }
-        let data = shared_data.lock().await;
-        data.deref().clone()
+
+        self.neurons
+            .par_iter()
+            .map(|neuron| {
+                let nsum = neuron.sum(&input);
+                nsum
+            })
+            .collect()
     }
 }
