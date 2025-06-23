@@ -1,6 +1,5 @@
 use crate::nn::primitives::FPrimitive;
 use rand::{distr::StandardUniform, prelude::*};
-use std::ops::Deref;
 use std::sync::Arc;
 
 use rayon::prelude::*;

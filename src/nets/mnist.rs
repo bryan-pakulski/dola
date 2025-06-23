@@ -1,6 +1,6 @@
 use crate::nn::Forward;
 use crate::nn::activations::{Relu, SoftMax};
-use crate::nn::nn::{DenseLayer, Neuron};
+use crate::nn::nn::DenseLayer;
 use crate::nn::primitives::FPrimitive;
 use rand::distr::StandardUniform;
 

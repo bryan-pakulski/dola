@@ -8,11 +8,7 @@ use nets::mnist::Mnist;
 use nn::loss::{LossForward, MeanSquaredError};
 use nn::primitives::{_F8, _F16, _F32, FPrimitive};
 
-use nn::nn::Neuron;
-
 use indicatif::ProgressBar;
-use std::sync::Arc;
-use std::time::Duration;
 
 //#[tokio::main]
 //fn main() {
@@ -33,7 +29,7 @@ use std::time::Duration;
 
 fn main() {
     let mut train_dataset: Loader<_F32> = Loader::new();
-    train_dataset.load("/home/bryanp/dev/datasets/MNIST-JPG/test");
+    train_dataset.load("/home/bryanp/Downloads/mnist/train/");
 
     println!("Train Dataset Size: {}", train_dataset.size());
 
@@ -53,7 +49,7 @@ fn main() {
             match sample {
                 Some((img_data, target)) => {
                     let prediction: Vec<_F32> = cnet.forward(&img_data);
-                    let loss_value: f32 = loss_fn.forward(&prediction, &target);
+                    let _loss_value: f32 = loss_fn.forward(&prediction, &target);
                     //println!("Prediction: {:?}", prediction);
                     //println!("Target: {:?}", target);
                     //println!("Loss: {}", loss_value);
