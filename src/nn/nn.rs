@@ -1,34 +1,29 @@
-use crate::nn::primitives::FPrimitive;
-use rand::{distr::StandardUniform, prelude::*};
+use rand::prelude::*;
 use std::sync::Arc;
 
 use rayon::prelude::*;
 
 #[derive(Debug, Clone)]
-pub struct Neuron<T> {
-    weights: Vec<T>,
-    bias: T,
+pub struct Neuron {
+    weights: Vec<f32>,
+    bias: f32,
     with_bias: bool,
 }
 
 #[derive(Debug, Clone)]
-pub struct DenseLayer<T> {
+pub struct DenseLayer {
     pub layer_name: String,
     pub input_dim: Vec<usize>,
-    pub neurons: Vec<Arc<Neuron<T>>>,
+    pub neurons: Vec<Arc<Neuron>>,
     pub freeze: bool,
 }
 
-impl<T> Neuron<T>
-where
-    T: FPrimitive<T> + std::ops::Mul<T, Output = T> + std::ops::Add<T, Output = T> + Clone,
-    StandardUniform: rand::distr::Distribution<T>,
-{
-    pub fn new(inputs: usize, with_bias: bool) -> Neuron<T> {
+impl Neuron {
+    pub fn new(inputs: usize, with_bias: bool) -> Neuron {
         let mut rng = rand::rng();
 
-        let bias = T::from(rng.random::<T>());
-        let weights: Vec<T> = (0..inputs).map(|_| T::from(rng.random::<T>())).collect();
+        let bias = rng.random::<f32>();
+        let weights: Vec<f32> = (0..inputs).map(|_| rng.random::<f32>()).collect();
 
         Neuron {
             weights,
@@ -37,22 +32,22 @@ where
         }
     }
 
-    pub fn sum(&self, inputs: &Vec<T>) -> T {
+    pub fn sum(&self, inputs: &Vec<f32>) -> f32 {
         assert_eq!(
             inputs.len(),
             self.weights.len(),
             "Neuron received invalid input shape!",
         );
 
-        let mut output = T::default();
+        let mut output = 0.0f32;
 
         // TODO: this could potentially also be done in parallel
         for (idx, value) in inputs.iter().enumerate() {
-            output = output.value() + value.value() * self.weights[idx].value();
+            output = output + value * self.weights[idx]
         }
 
         if self.with_bias {
-            output = output + self.bias.value();
+            output = output + self.bias;
         }
 
         output
@@ -63,25 +58,15 @@ where
     }
 }
 
-impl<T> DenseLayer<T>
-where
-    T: FPrimitive<T>
-        + std::ops::Mul<T, Output = T>
-        + std::ops::Add<T, Output = T>
-        + Clone
-        + Send
-        + Sync
-        + 'static,
-    StandardUniform: rand::distr::Distribution<T>,
-{
+impl DenseLayer {
     pub fn new(
         layer_name: &str,
         neurons: usize,
         input_dim: Vec<usize>,
         with_bias: bool,
-    ) -> DenseLayer<T> {
+    ) -> DenseLayer {
         let size = input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
-        let mut l: DenseLayer<T> = DenseLayer {
+        let mut l = DenseLayer {
             layer_name: layer_name.into(),
             input_dim: input_dim.clone(),
             neurons: vec![],
@@ -93,7 +78,7 @@ where
         l
     }
 
-    pub fn forward(&self, input: Vec<T>) -> Vec<T> {
+    pub fn forward(&self, input: Vec<f32>) -> Vec<f32> {
         let size = self.input_dim.iter().copied().reduce(|a, b| a * b).unwrap();
         if size != input.len() {
             panic!(

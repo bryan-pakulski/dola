@@ -4,11 +4,9 @@ pub mod nn;
 pub mod util;
 
 use dataloader::classification::{ClassificationFolderLoader, Loader};
+use indicatif::ProgressBar;
 use nets::mnist::Mnist;
 use nn::loss::{LossForward, MeanSquaredError};
-use nn::primitives::{_F8, _F16, _F32, FPrimitive};
-
-use indicatif::ProgressBar;
 
 //#[tokio::main]
 //fn main() {
@@ -28,12 +26,12 @@ use indicatif::ProgressBar;
 //}
 
 fn main() {
-    let mut train_dataset: Loader<_F32> = Loader::new();
-    train_dataset.load("/home/bryanp/Downloads/mnist/train/");
+    let mut train_dataset: Loader = Loader::new();
+    train_dataset.load("/home/bryanp/dev/datasets/MNIST-JPG/test");
 
     println!("Train Dataset Size: {}", train_dataset.size());
 
-    let mut cnet: Mnist<_F32>;
+    let mut cnet: Mnist;
     cnet = Mnist::new();
     let loss_fn = MeanSquaredError {};
 
@@ -48,7 +46,7 @@ fn main() {
         while sample.is_some() {
             match sample {
                 Some((img_data, target)) => {
-                    let prediction: Vec<_F32> = cnet.forward(&img_data);
+                    let prediction: Vec<f32> = cnet.forward(&img_data);
                     let _loss_value: f32 = loss_fn.forward(&prediction, &target);
                     //println!("Prediction: {:?}", prediction);
                     //println!("Target: {:?}", target);

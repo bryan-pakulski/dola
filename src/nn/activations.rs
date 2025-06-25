@@ -1,7 +1,4 @@
-use rand::distr::StandardUniform;
-
 use super::Forward;
-use super::primitives::FPrimitive;
 
 pub struct Relu {}
 pub struct SoftMax {}
@@ -12,23 +9,15 @@ impl Relu {
     }
 }
 
-impl<T> Forward<T> for Relu
-where
-    T: FPrimitive<T>
-        + std::ops::Mul<T, Output = T>
-        + std::ops::Add<T, Output = T>
-        + Clone
-        + std::cmp::PartialOrd<f32>,
-    StandardUniform: rand::distr::Distribution<T>,
-{
-    fn forward(&self, input: &Vec<T>) -> Vec<T> {
-        let mut output: Vec<T> = Vec::new();
+impl Forward for Relu {
+    fn forward(&self, input: &Vec<f32>) -> Vec<f32> {
+        let mut output: Vec<f32> = Vec::new();
 
         for i in input.iter() {
-            if i.value() > 0.0f32 {
-                output.push(i.value());
+            if *i > 0.0f32 {
+                output.push(*i);
             } else {
-                output.push(T::default());
+                output.push(0.0f32);
             }
         }
 
@@ -42,19 +31,15 @@ impl SoftMax {
     }
 }
 
-impl<T> Forward<T> for SoftMax
-where
-    T: FPrimitive<T> + std::ops::Add<T, Output = T> + std::ops::Div<Output = T> + Copy,
-    StandardUniform: rand::distr::Distribution<T>,
-{
-    fn forward(&self, input: &Vec<T>) -> Vec<T> {
-        let mut output: Vec<T> = Vec::new();
-        let mut sum: T = T::default();
+impl Forward for SoftMax {
+    fn forward(&self, input: &Vec<f32>) -> Vec<f32> {
+        let mut output: Vec<f32> = Vec::new();
+        let mut sum = 0.0f32;
         for i in input {
             sum = sum + *i;
         }
         for i in input {
-            output.push(i.value() / sum);
+            output.push(i / sum);
         }
 
         output

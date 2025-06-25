@@ -1,35 +1,21 @@
 use crate::nn::Forward;
 use crate::nn::activations::{Relu, SoftMax};
 use crate::nn::nn::DenseLayer;
-use crate::nn::primitives::FPrimitive;
 use rand::distr::StandardUniform;
 
-pub struct Mnist<T> {
-    l0: DenseLayer<T>,
-    l1: DenseLayer<T>,
-    l2: DenseLayer<T>,
-    l3: DenseLayer<T>,
+pub struct Mnist {
+    l0: DenseLayer,
+    l1: DenseLayer,
+    l2: DenseLayer,
+    l3: DenseLayer,
 }
 
-impl<T> Mnist<T>
-where
-    T: FPrimitive<T>
-        + std::ops::Mul<T, Output = T>
-        + std::ops::Add<T, Output = T>
-        + std::ops::Div<T, Output = T>
-        + Clone
-        + Copy
-        + Send
-        + Sync
-        + 'static
-        + std::cmp::PartialOrd<f32>,
-    StandardUniform: rand::distr::Distribution<T>,
-{
-    pub fn new() -> Mnist<T> {
-        let mut l0: DenseLayer<T> = DenseLayer::new("l0", 784, vec![28, 28], false);
-        let mut l1: DenseLayer<T> = DenseLayer::new("l1", 256, vec![784, 1], true);
-        let mut l2: DenseLayer<T> = DenseLayer::new("l2", 128, vec![256, 1], true);
-        let mut l3: DenseLayer<T> = DenseLayer::new("l3", 10, vec![128, 1], false);
+impl Mnist {
+    pub fn new() -> Mnist {
+        let mut l0: DenseLayer = DenseLayer::new("l0", 784, vec![28, 28], false);
+        let mut l1: DenseLayer = DenseLayer::new("l1", 256, vec![784, 1], true);
+        let mut l2: DenseLayer = DenseLayer::new("l2", 128, vec![256, 1], true);
+        let mut l3: DenseLayer = DenseLayer::new("l3", 10, vec![128, 1], false);
 
         let mut params = 0;
         let mut neurons: usize = 0;
@@ -47,7 +33,7 @@ where
         Mnist { l0, l1, l2, l3 }
     }
 
-    pub fn forward(&mut self, input: &Vec<T>) -> Vec<T> {
+    pub fn forward(&mut self, input: &Vec<f32>) -> Vec<f32> {
         let relu = Relu::new();
         let smax: SoftMax = SoftMax::new();
 

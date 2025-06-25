@@ -1,4 +1,3 @@
-use crate::{_F8, _F16, _F32, FPrimitive};
 use glob::glob;
 use std::collections::HashMap;
 
@@ -6,32 +5,30 @@ use rand::rng;
 use rand::seq::SliceRandom;
 
 // Expects a folder with subfolders containing different image classes, subfolder names are used as label names
-pub trait ClassificationFolderLoader<T> {
+pub trait ClassificationFolderLoader {
     fn load(&mut self, path: &str);
     fn shuffle(&mut self);
-    fn get(&self, index: usize) -> Option<(Vec<T>, Vec<T>)>;
-    fn next(&mut self) -> Option<(Vec<T>, Vec<T>)>;
-    fn load_image(&self, path: &str) -> Vec<T>;
+    fn get(&self, index: usize) -> Option<(Vec<f32>, Vec<f32>)>;
+    fn next(&mut self) -> Option<(Vec<f32>, Vec<f32>)>;
+    fn load_image(&self, path: &str) -> Vec<f32>;
 }
 
-pub struct Loader<T> {
+pub struct Loader {
     images: Vec<(String, usize)>,
     index_order: Vec<usize>,
     label_map: HashMap<String, usize>,
     label_count: usize,
     iter: usize,
-    _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Loader<T> {
-    pub fn new() -> Loader<T> {
-        let data_loader: Loader<T> = Loader {
+impl Loader {
+    pub fn new() -> Loader {
+        let data_loader: Loader = Loader {
             images: vec![],
             index_order: vec![0; 0],
             label_map: vec![].into_iter().collect(),
             iter: 0,
             label_count: 0,
-            _phantom: std::marker::PhantomData,
         };
 
         data_loader
@@ -42,10 +39,7 @@ impl<T> Loader<T> {
     }
 }
 
-impl<T> ClassificationFolderLoader<T> for Loader<T>
-where
-    T: FPrimitive<T> + From<f32> + From<_F32> + From<_F16> + From<_F8> + Clone,
-{
+impl ClassificationFolderLoader for Loader {
     fn load(&mut self, path: &str) {
         // Load data from subfolders, create a image and label pair
         let blob_query = path.to_owned() + "/**/*.jpg";
@@ -94,8 +88,8 @@ where
         self.index_order.shuffle(&mut rng);
     }
 
-    fn load_image(&self, path: &str) -> Vec<T> {
-        let mut img_data: Vec<T> = vec![];
+    fn load_image(&self, path: &str) -> Vec<f32> {
+        let mut img_data: Vec<f32> = vec![];
 
         let img = image::open(path).unwrap();
         let raw_img = img.to_luma32f().into_raw();
@@ -107,16 +101,16 @@ where
         img_data
     }
 
-    fn get(&self, index: usize) -> Option<(Vec<T>, Vec<T>)> {
+    fn get(&self, index: usize) -> Option<(Vec<f32>, Vec<f32>)> {
         match self.index_order.get(index) {
             Some(idx) => {
                 let metadata: &(String, usize) = self.images.get(*idx).unwrap();
                 let img_path = metadata.0.as_str();
                 let label = metadata.1;
-                let img_data: Vec<T> = self.load_image(img_path);
+                let img_data: Vec<f32> = self.load_image(img_path);
 
-                let mut output_data: Vec<T> = vec![T::default(); self.label_count];
-                output_data[label].set(1.0f32.into());
+                let mut output_data: Vec<f32> = vec![0.0f32; self.label_count];
+                output_data[label] = 1.0f32;
 
                 Some((img_data, output_data))
             }
@@ -124,7 +118,7 @@ where
         }
     }
 
-    fn next(&mut self) -> Option<(Vec<T>, Vec<T>)> {
+    fn next(&mut self) -> Option<(Vec<f32>, Vec<f32>)> {
         if self.iter < self.index_order.len() {
             let idx = self.index_order[self.iter];
             let data = self.get(idx);
